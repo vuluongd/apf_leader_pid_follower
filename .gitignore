@@ -1,0 +1,19 @@
+# ROS2 colcon build artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+
+# OS files
+.DS_Store
+Thumbs.db
