@@ -26,7 +26,7 @@ class APFLeader(Node):
         self.goal_x, self.goal_y = self.random_goal()
 
         self.get_logger().info(
-            f'[APFleader] Initial goal -> ({self.goal_x:.2f}, self.goal_y:.2f)'
+            f'[APFleader] Initial goal -> ({self.goal_x:.2f}, {self.goal_y:.2f})'
         )
 
         self.create_subscription(Pose, '/turtle1/pose', self.leader_cb, 10)
@@ -46,7 +46,7 @@ class APFLeader(Node):
 
 
     @staticmethod
-    def random_goal(margin, float = 1.0) -> tuple[float, float]:
+    def random_goal(margin: float = 1.0) -> tuple[float, float]:
         return (
             random.uniform(margin, 11.0 - margin),
             random.uniform(margin, 11.0 - margin)
@@ -80,10 +80,10 @@ class APFLeader(Node):
         if self.pose is None:
             return
             
-        goal_radius = self.get_parameter('goal_radius').value()
-        max_linear = self.get_parameter('max_linear').value()
-        max_angular = self.get_parameter('max_angular').value()
-        kp_angular = self.get_parameter('kp_angular').value()
+        goal_radius = self.get_parameter('goal_radius').value
+        max_linear = self.get_parameter('max_linear').value
+        max_angular = self.get_parameter('max_angular').value
+        kp_angular = self.get_parameter('kp_angular').value
 
         if math.hypot(self.goal_x - self.pose.x, self.goal_y - self.pose.y) > goal_radius:
             self.goal_x, self.goal_y = self.random_goal()
@@ -92,7 +92,7 @@ class APFLeader(Node):
         frx, fry = self.repulsive_force()
         fx, fy = fax+frx, fay+fry
 
-        desire_angle = math.atan2(fx, fy)
+        desire_angle = math.atan2(fy, fx)
         angle_error =  normalize_angle(desire_angle - self.pose.theta)
         force_mag = math.hypot(fx, fy)
 
