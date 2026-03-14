@@ -4,7 +4,8 @@ from turtlesim.msg import Pose
 from geometry_msgs import Twist
 import math
 import random
-
+def normalize_angle(a: float) -> float:
+    return math.atan2(math.sin(a), math.cos(a))
 class APFLeader(Node):
     def __init__(self):
         super().__init__('turtle_leader')
@@ -84,7 +85,39 @@ class APFLeader(Node):
             max_angular = self.get_parameter('max_angular').value()
             kp_angular = self.get_parameter('kp_angular').value()
 
-            
+            if math.hypot(self.goal_x - self.pose.x, self.goal_y - self.pose.y) > goal_radius:
+                self.goal_x, self.goal_y = self.random_goal()
+
+            fax, fay = self.attractive_goal()
+            frx, fry = self.repulsive_goal()
+            fx, fy = fax+frx, fay+fry
+
+            desire_angle = math.atan2(fx, fy)
+            angle_error =  normalize_angle(desire_angle - self.pose.theta)
+            force_mag = math.hypot(fx, fy)
+
+            cmd = Twist()
+            cmd.angular.z = max(-max_angular, min(max_angular, kp_angular * angle_error))
+            cmd.linear.x  = max(0.0, min(max_linear, force_mag)) if abs(angle_error) < 0.5 else 0.0
+
+            self.pub.publish(cmd)
+
+def main():
+    rclpy.init()
+    node = APFLeader()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ =='__main__':
+    main()
+
+
+
+
+
+
+
         
 
 
