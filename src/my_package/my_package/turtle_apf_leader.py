@@ -1,7 +1,7 @@
 import rclpy 
 from rclpy.node import Node
 from turtlesim.msg import Pose
-from geometry_msgs import Twist
+from geometry_msgs.msg import Twist
 import math
 import random
 def normalize_angle(a: float) -> float:
@@ -45,62 +45,62 @@ class APFLeader(Node):
         self.create_timer(0.05, self.control_loop)
 
 
-        @staticmethod
-        def random_goal(margin, float = 1.0) -> tuple[float, float]:
-            return (
-                random.uniform(margin, 11.0 - margin),
-                random.uniform(margin, 11.0 - margin)
+    @staticmethod
+    def random_goal(margin, float = 1.0) -> tuple[float, float]:
+        return (
+            random.uniform(margin, 11.0 - margin),
+            random.uniform(margin, 11.0 - margin)
             )
-        #APF core
-        def attractive_force(self) -> tuple[float, float]:
-            ka = self.get_parameters('ka').value
-            return ka*(self.goal_x - self.pose.x), ka*(self.goal_y - self.pose.y)
+    #APF core
+    def attractive_force(self) -> tuple[float, float]:
+        ka = self.get_parameters('ka').value
+        return ka*(self.goal_x - self.pose.x), ka*(self.goal_y - self.pose.y)
         
-        def repulsive_force(self) -> tuple[float, float]:
-            kr = self.get_parameters('kr').value
-            rho_0 = self.get_parameters('rho_0').value
-            fx = 0
-            fy = 0
+    def repulsive_force(self) -> tuple[float, float]:
+        kr = self.get_parameters('kr').value
+        rho_0 = self.get_parameters('rho_0').value
+        fx = 0
+        fy = 0
 
-            for obstacle in self.obstacle_poses.values():
-                dx = self.pose.x - obstacle.x
-                dy = self.pose.y - obstacle.y
-                rho = math.hypot(dx, dy)
-                if 0.0 < rho < rho_0:
-                    coef = kr*(1.0/rho - 1.0/rho_0)/rho ** 2
-                    fx += coef * dx/rho
-                    fy += coef * dy/rho
+        for obstacle in self.obstacle_poses.values():
+            dx = self.pose.x - obstacle.x
+            dy = self.pose.y - obstacle.y
+            rho = math.hypot(dx, dy)
+            if 0.0 < rho < rho_0:
+                coef = kr*(1.0/rho - 1.0/rho_0)/rho ** 2
+                fx += coef * dx/rho
+                fy += coef * dy/rho
 
-            return fx, fy
+        return fx, fy
         
-        def leader_cb(self, msg: Pose):
-            self.pose = msg
+    def leader_cb(self, msg: Pose):
+        self.pose = msg
 
-        def control_loop(self):
-            if self.pose is None:
-                return
+    def control_loop(self):
+        if self.pose is None:
+            return
             
-            goal_radius = self.get_parameter('goal_radius').value()
-            max_linear = self.get_parameter('max_linear').value()
-            max_angular = self.get_parameter('max_angular').value()
-            kp_angular = self.get_parameter('kp_angular').value()
+        goal_radius = self.get_parameter('goal_radius').value()
+        max_linear = self.get_parameter('max_linear').value()
+        max_angular = self.get_parameter('max_angular').value()
+        kp_angular = self.get_parameter('kp_angular').value()
 
-            if math.hypot(self.goal_x - self.pose.x, self.goal_y - self.pose.y) > goal_radius:
-                self.goal_x, self.goal_y = self.random_goal()
+        if math.hypot(self.goal_x - self.pose.x, self.goal_y - self.pose.y) > goal_radius:
+            self.goal_x, self.goal_y = self.random_goal()
 
-            fax, fay = self.attractive_goal()
-            frx, fry = self.repulsive_goal()
-            fx, fy = fax+frx, fay+fry
+        fax, fay = self.attractive_force()
+        frx, fry = self.repulsive_force()
+        fx, fy = fax+frx, fay+fry
 
-            desire_angle = math.atan2(fx, fy)
-            angle_error =  normalize_angle(desire_angle - self.pose.theta)
-            force_mag = math.hypot(fx, fy)
+        desire_angle = math.atan2(fx, fy)
+        angle_error =  normalize_angle(desire_angle - self.pose.theta)
+        force_mag = math.hypot(fx, fy)
 
-            cmd = Twist()
-            cmd.angular.z = max(-max_angular, min(max_angular, kp_angular * angle_error))
-            cmd.linear.x  = max(0.0, min(max_linear, force_mag)) if abs(angle_error) < 0.5 else 0.0
+        cmd = Twist()
+        cmd.angular.z = max(-max_angular, min(max_angular, kp_angular * angle_error))
+        cmd.linear.x  = max(0.0, min(max_linear, force_mag)) if abs(angle_error) < 0.5 else 0.0
 
-            self.pub.publish(cmd)
+        self.pub.publish(cmd)
 
 def main():
     rclpy.init()
