@@ -37,8 +37,18 @@ class PIDfollower(Node):
         self.integral_angle = 0.0
         self.prev_time = self.get_clock().now()
 
+        #subscriber cho leader và follower
         self.create_subscription(Pose, '/turtle1/pose', self.leader_cb, 10)
         self.create_subscription(Pose, '/turtle2.pose', self.follower_cb, 10)
+
+        obstacle_names: list[str] = self.get_parameter('obstacle_names').value
+        for name in obstacle_names:
+            self.create_subscription(
+                Pose, f'/{name}/pose',
+                lambda msg, n = name : self.obstacle_poses.__setitem__(n, msg),
+                10,
+            )
+        self.pub = self.create_publisher(Twist, '/turtle2/cmd_vel', 10)
 
         
 
