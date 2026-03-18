@@ -50,7 +50,48 @@ class PIDfollower(Node):
             )
         self.pub = self.create_publisher(Twist, '/turtle2/cmd_vel', 10)
 
-        
+    def leader_cb(self, msg: Pose):
+        self.leader_pose = msg
+
+    def follower_cb(self, msg: Pose):
+        current_time = self.get_clock().now()
+        dt = (current_time - prev_time) * 1e-9
+        prev_time = current_time
+
+        if dt <= 0 or self.leader_pose is None:
+            return
+
+        self.compute_and_publish(msg, dt)
+
+    def repulsive_velocity(self, pose: Pose) -> tuple[float, float]:
+        kr = self.get_parameter('kr_follower').value
+        rho0 = self.get_parameter('rho_follower').value
+        vx = vy = 0.0
+        for obs in self.obstacle_poses.values():
+            dx = pose.x - obs.x
+            dy = pose.y - obs.y
+            rho = math.hypot(dx, dy)
+
+            if 0.0 < rho < rho0:
+
+                coef = kr*(1.0 / rho - 1 /rho0)/rho**2
+                vx += coef*dx/rho
+                vy += coef*dy/rho
+
+        return vx, vy
+    
+    #PID+APF
+
+    def compute_and_publish(self, msg: Pose, dt: float):
+        desired_distance = self.get_parameter('desired_distance').value
+        max_linear_speed = self.get_parameter('max_linear_speed').value
+        kp_linear = self.get_parameter('kp_linear').value
+        ki_linear = self.get_parameter('ki_linear').value
+        kd_linear = self.get_parameter('kd_linear').value
+        kp_angular = self.get_parameter('kp_angular').value
+        ki_angular = self.get_parameter('ki_angular').value
+        kd_angular = self.get_parameter('kd_angular').value
+
 
                                
 
