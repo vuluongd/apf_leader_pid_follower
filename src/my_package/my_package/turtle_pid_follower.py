@@ -91,9 +91,34 @@ class PIDfollower(Node):
         kp_angular = self.get_parameter('kp_angular').value
         ki_angular = self.get_parameter('ki_angular').value
         kd_angular = self.get_parameter('kd_angular').value
+        angle_threshold = self.get_parameter('angle_threhold').value
 
+        dx = self.leafer_pose.x - msg.x
+        dy = self.leader_pose.y - msg.y
+        distance = math.hypot(dx, dy)
 
-                               
+        #bám leader và lực đẩy tránh vật cản 
+        rx, ry = self.repulsive_velocity(msg)
+        fx = dx / max(distance, 1e-6) + rx
+        fy = dy / max(distance, 1e-6) + ry
+
+        desired_angle = math.atan2(fx, fy)
+        angle_error = normalize_angle(desired_angle - msg.theta)
+        distance_error = distance - desired_distance 
+
+        #PID linear
+        self.integral_distance += distance_error*dt
+        deriv_dist = (distance_error - self.prev_distance_error) / dt
+        linear_out = (kp_linear * distance_error) + (ki_linear * self.integral_angle) + (kd_linear * deriv_dist)
+
+        self.prev_distance_error = distance_error
+
+        #PID angular
+        self.integral_angle += angle_error*dt
+        deriv_angle += (angle_error - self.prev_angle_error) / dt
+        angle_out = (kp_angular * angle_error) + (ki_angular * self.integral_angle) + (kd_angular * deriv_angle)
+        
+        self.prev_angle_error = angle_error
 
         
 
