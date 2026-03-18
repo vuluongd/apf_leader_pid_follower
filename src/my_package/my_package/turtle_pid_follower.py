@@ -120,7 +120,26 @@ class PIDfollower(Node):
         
         self.prev_angle_error = angle_error
 
-        
+        cmd = Twist()
+
+        if abs(angle_error) > angle_threshold:
+            cmd.linear.x = 0.0
+            cmd.angular.z = angle_threshold
+        else:
+            cmd.linear.x = max(0.0, min(max_linear_speed, linear_out))
+            cmd.angular.z = angle_out
+
+        self.pub.publish(cmd)
+
+def main():
+    rclpy.init()
+    node = PIDfollower()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
 
 
 
