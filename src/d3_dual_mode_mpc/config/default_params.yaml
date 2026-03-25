@@ -1,0 +1,73 @@
+# ============================================================
+# D3 Dual-Mode MPC — Default Parameters
+# Turtlesim 2D Prototype
+# ============================================================
+
+apf_leader:
+  ros__parameters:
+    # --- Attractive potential ---
+    k_att: 1.0
+    # --- Repulsive potential ---
+    k_rep: 2.0
+    rho_0: 2.0           # obstacle influence range (turtlesim units)
+    # --- Velocity limits ---
+    v_max: 2.0
+    max_angular: 3.0
+    kp_angular: 4.0
+    # --- Goal ---
+    goal_radius: 0.4
+    # --- Local minima ---
+    epsilon_stuck: 0.05
+    T_stuck: 3.0
+    delta_rand: 0.3
+    # --- Obstacles (turtlesim turtle names) ---
+    obstacle_names: ['obstacle1', 'obstacle2']
+
+signal_simulator:
+  ros__parameters:
+    # --- Detection geometry (scaled for turtlesim 11x11) ---
+    d_max: 4.0            # max detection range
+    fov_half_angle: 45.0  # degrees, half of FoV cone (2D simplification)
+    # --- Sensing delay ---
+    delay_h: 0.25         # seconds
+    # --- Noise ---
+    noise_sigma_x: 0.01   # turtlesim units
+    noise_sigma_y: 0.01
+    # --- Signal loss override (for testing) ---
+    force_signal_loss: false
+
+mpc_follower:
+  ros__parameters:
+    # --- Controller mode: 'hover', 'mpc_a', 'mpc_b', 'mpc_visual' ---
+    controller_mode: 'mpc_b'
+    # --- Formation offset ---
+    offset_x: 0.0
+    offset_y: -2.0        # follower stays 2 units behind leader
+    # --- MPC tuning ---
+    N_horizon: 10          # prediction horizon steps
+    T_s: 0.05              # sampling period (s)
+    Q_pos: 10.0            # position tracking weight
+    Q_vel: 1.0             # velocity tracking weight
+    R_input: 0.1           # input regularization weight
+    # --- Q(tau) decay ---
+    lambda_decay: 0.5      # exponential decay rate
+    Q_floor: 0.1           # minimum Q weight (stops at this)
+    # --- Re-acquisition ---
+    delta_reacq: 0.8       # consistency threshold for re-acquisition
+    alpha_reset: 0.3       # Q reset factor on inconsistent re-acquisition
+    T_ramp_steps: 20       # steps to ramp Q back to Q_0
+    # --- Velocity limits ---
+    v_max: 2.0
+    max_angular: 3.0
+    kp_angular: 4.0
+    # --- Safety ---
+    d_safe: 0.5            # min distance to leader
+
+velocity_relay:
+  ros__parameters:
+    rf_delay_ms: 50        # simulated RF latency (1 step at 50ms)
+
+data_logger:
+  ros__parameters:
+    output_dir: '/tmp/d3_logs'
+    log_interval_ms: 50    # log every 50ms
